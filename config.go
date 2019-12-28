@@ -30,7 +30,7 @@ func init() {
 
 func readConfigFile() ([]byte, string) {
 	basename := "slack-mailer.json"
-	dirs := []string{}
+	var dirs []string
 
 	if homeDir, err := os.UserHomeDir(); err == nil {
 		dirs = append(dirs, homeDir+"/"+basename)
