@@ -1,36 +1,26 @@
 package main
 
 import (
+	"encoding/json"
 	"github.com/kubatek94/slack-mailer/mailer"
 	"log"
 	"net/mail"
-	"net/url"
 	"os"
 )
 
 func main() {
-	message, err := mail.ReadMessage(os.Stdin)
+	email, err := mail.ReadMessage(os.Stdin)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	mailer.ForwardMail(getWebhookUrl(), message)
-}
+	message := mailer.ForwardMail(config.WebhookUrl, email)
 
-func getWebhookUrl() string {
-	webhookUrl := os.Getenv("WEBHOOK_URL")
-	if webhookUrl == "" {
-		log.Fatal("WEBHOOK_URL environment variable must be provided")
+	if config.Debug {
+		if content, err := json.MarshalIndent(message, "", "  "); err != nil {
+			log.Fatalf("failed to JSON encode message for debug purposes: %v", err)
+		} else {
+			log.Printf("POST %s\n%s\n", config.WebhookUrl, content)
+		}
 	}
-
-	parsedWebhookUrl, err := url.Parse(webhookUrl)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	if parsedWebhookUrl.Host == "" {
-		log.Fatal("WEBHOOK_URL environment variable must be a full URL, including host")
-	}
-
-	return webhookUrl
 }

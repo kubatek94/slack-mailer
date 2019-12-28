@@ -13,8 +13,10 @@ import (
 	"strings"
 )
 
-func ForwardMail(webhookUrl string, message *mail.Message) {
-	postMessage(webhookUrl, mailToMessage(message))
+func ForwardMail(webhookUrl string, email *mail.Message) Message {
+	message := mailToMessage(email)
+	postMessage(webhookUrl, message)
+	return message
 }
 
 func mailToMessage(m *mail.Message) Message {
@@ -48,7 +50,7 @@ func mailToMessage(m *mail.Message) Message {
 }
 
 func headersToContext(headers mail.Header) (map[string]interface{}, uint) {
-	results := make([]interface{}, 0, math.Max(0, float64(len(headers)-3)))
+	results := make([]interface{}, 0, int(math.Max(0, float64(len(headers)-3))))
 	for k, items := range headers {
 		switch k {
 		case "To", "From", "Subject":
@@ -70,8 +72,10 @@ func bodyToText(reader io.Reader) string {
 }
 
 func postMessage(webhookUrl string, message Message) {
-	content, _ := json.Marshal(message)
-	//log.Fatal(bodyToText(bytes.NewReader(content)))
+	content, err := json.Marshal(message)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	resp, err := http.Post(webhookUrl, "application/json", bytes.NewBuffer(content))
 	if err != nil {
